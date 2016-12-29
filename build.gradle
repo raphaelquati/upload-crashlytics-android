@@ -1,0 +1,39 @@
+group 'upload-crashlytics-android'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 1.8
+version = project.property('projectVersion')
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabric.io/public' }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile 'io.fabric.tools:gradle:1.+'
+    compile 'com.github.rvesse:airline:2.2.0'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'uk.lyptt.uploadcrashlyticsandroid.Main', 'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
+    }
+}
+
+shadowJar {
+    baseName = 'uploadcrashlyticsandroid'
+    version = project.property('projectVersion')
+}

@@ -1,0 +1,5 @@
+rootProject.name = 'upload-crashlytics-android'
+include 'src'
+findProject(':src')?.name = 'cli'
+rootProject.name = 'cli'
+
