@@ -45,9 +45,6 @@ public class Main {
 	@Option(name = "--apk-path", description = "The path to the APK to upload")
 	private String apkPath;
 
-	@Option(name = "--release-notes", description = "The release notes for this version")
-	private String releaseNotes;
-
 	@Arguments(description = "Additional arguments")
 	private List<String> args;
 
@@ -91,10 +88,6 @@ public class Main {
 		// processArgsInternal function does.
 		DeveloperTools.setWebApi(DeveloperTools.createWebApi());
 
-		if (Strings.isNullOrEmpty(releaseNotes)) {
-			return;
-		}
-
 		// Now that WebApi is intialised, we can access it to upload our distribution.
 		try {
 			DeveloperTools.getWebApi().createDistribution(
@@ -104,22 +97,6 @@ public class Main {
 				new DistributionData(apkFile, new Date().toInstant().toEpochMilli() / 1000),
 				false, // sendNotifications
 				(length, count) -> System.out.println(String.format("%d", (count / length) * 100))
-			);
-		} catch (AuthenticationException | IOException e) {
-			e.printStackTrace();
-		}
-
-		try {
-			// There's also a setReleaseNotes function, but this appears to be for internal use only as it doesn't pass a
-			// build secret to the Crashlytics API.
-			DeveloperTools.getWebApi().setBuildServerReleaseNotes(
-				apiKey,
-				buildSecret,
-				packageName,
-				UUID.randomUUID().toString(),
-				versionNumber,
-				buildNumber,
-				new ReleaseNotes("MARKDOWN", releaseNotes)
 			);
 		} catch (AuthenticationException | IOException e) {
 			e.printStackTrace();
