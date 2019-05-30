@@ -1,11 +1,9 @@
 package uk.lyptt.uploadcrashlyticsandroid;
 
-import com.crashlytics.api.AppRelease;
-import com.crashlytics.api.AuthenticationException;
-import com.crashlytics.api.DistributionData;
-import com.crashlytics.api.ota.ReleaseNotes;
-import com.crashlytics.reloc.com.google.common.base.Strings;
+import com.crashlytics.api.WebApi;
 import com.crashlytics.tools.android.DeveloperTools;
+import com.crashlytics.tools.android.DistributionTasks;
+import com.crashlytics.tools.android.exception.DistributionException;
 import com.github.rvesse.airline.HelpOption;
 import com.github.rvesse.airline.SingleCommand;
 import com.github.rvesse.airline.annotations.Arguments;
@@ -15,7 +13,6 @@ import com.github.rvesse.airline.parser.errors.ParseException;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -30,21 +27,22 @@ public class Main {
 	@Option(name = "--build-secret", description = "Your Fabric build secret")
 	private String buildSecret;
 
-	@Option(name = "--app-name", description = "The application's name")
-	private String appName;
-
-	@Option(name = "--package-name", description = "The application's package name")
-	private String packageName;
-
-	@Option(name = "--version", description = "The application's version number")
-	private String versionNumber;
-
-	@Option(name = "--build-version", description = "The application's build version number")
-	private String buildNumber;
-
 	@Option(name = "--apk-path", description = "The path to the APK to upload")
 	private String apkPath;
 
+	@Option(name = "--release-notes", description = "The release notes for this version")
+	private String releaseNotes;
+	
+	@Option(name = "--emails", description = "Emails to invite")
+	private String emails = null;
+
+	@Option(name = "--groups", description = "Groups to invite")
+	private String groups = null;
+		
+	@Option(name = "--notify", description = "Send notification?")
+	private boolean notify = false;
+	
+	
 	@Arguments(description = "Additional arguments")
 	private List<String> args;
 
@@ -53,25 +51,20 @@ public class Main {
 		try {
 			final Main cmd = parser.parse(args);
 			cmd.run();
-		} catch (ParseException ex) {
+		} catch (ParseException | DistributionException ex) {
 			System.out.println(ex.getLocalizedMessage());
 			System.exit(-1);
 		}
 	}
 
-	private void run() {
+	private void run() throws DistributionException {
 		if (helpOption.showHelpIfRequested()) {
 			return;
 		}
-
-		// Do manual validation, since the args parser isn't particularly helpful in this regard.
+		
 		if (Arrays.stream(new Object[] {
 			apiKey,
 			buildSecret,
-			appName,
-			packageName,
-			versionNumber,
-			buildNumber,
 			apkPath
 		}).anyMatch(Objects::isNull)) {
 			helpOption.showHelp();
@@ -83,23 +76,9 @@ public class Main {
 			System.out.println("Unable to locate APK file. Aborting.");
 			System.exit(-1);
 		}
+		
+		WebApi webApi = DeveloperTools.createWebApi();
 
-		// Create the WebApi, it defaults to null so we create it the same way the DeveloperTools private
-		// processArgsInternal function does.
-		DeveloperTools.setWebApi(DeveloperTools.createWebApi());
-
-		// Now that WebApi is intialised, we can access it to upload our distribution.
-		try {
-			DeveloperTools.getWebApi().createDistribution(
-				apiKey,
-				buildSecret,
-				new AppRelease(appName, packageName, UUID.randomUUID().toString(), versionNumber, buildNumber),
-				new DistributionData(apkFile, new Date().toInstant().toEpochMilli() / 1000),
-				false, // sendNotifications
-				(length, count) -> System.out.println(String.format("%d", (count / length) * 100))
-			);
-		} catch (AuthenticationException | IOException e) {
-			e.printStackTrace();
-		}
+		DistributionTasks.uploadDistribution(apiKey, buildSecret, apkFile, emails, groups, releaseNotes, notify, webApi);
 	}
 }

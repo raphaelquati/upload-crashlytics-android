@@ -21,12 +21,16 @@ java -jar
   --api-key XXXXX
   --build-secret YYYYY
   --apk-path app-release.apk
-  --app-name Myapp
-  --package-name uk.lyptt.Myapp
-  --version 1.0
-  --build-version 1
 ```
 
 Will upload the specified APK to Fabric.
 
-You can also specify a `--release-notes` option, which will upload the specified text in markdown format for the uploaded APK.
+Additional options:
+
+`--release-notes` - which will upload the specified text in plaintext format for the uploaded APK.
+
+`--emails` - specify emails to invite to this version
+
+`--groups` - specify groups to invite to this version
+
+`--notify` - send notification
